@@ -72,16 +72,17 @@ class Config():
     @staticmethod
     def create_config_file(config_path):
         config = (
-            '# Время действия основного токена\n'
-            'TOKEN_EXPIRATION_SECS = 3600\n'
-            '# Время действия токена обновления\n'
-            'REFRESH_TOKEN_EXP = 259200\n'
-            '# Только HTTPS\n'
-            'SECURE=True\n'
-            '# Алгоритм шифрования\n'
-            'ALGORITHM=\'RS256\'\n'
-            'PORT = 8001\n'
-            'HOST = \'0.0.0.0\'\n'
+            '# Main token expiration time'
+            'TOKEN_EXPIRATION_SECS = 3600'
+            '# Refresh token expiration time'
+            'REFRESH_TOKEN_EXP = 259200'
+            '# Only HTTPS'
+            'SECURE=True'
+            '# hashing algorithm'
+            'ALGORITHM=\'RS256\''
+            'PORT = 8001'
+            'HOST = \'0.0.0.0\''
+            'PROTECT_PATH=\'InfoBase\''
         )
 
         try:
