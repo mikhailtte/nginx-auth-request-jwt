@@ -31,17 +31,30 @@ This is an authentication interface, great to use with nginx `auth_request` dire
 - Generation and renewal of JWT tokens upon expiration using a refresh token
 - Use of HttpOnly Secured Cookies (prevents XSS attacks)
 
-## Installation
+# Installation
 
-Requirements: Python 3.13, nginx + SSL
+Requirements: Python 3.13, nginx (or other) + SSL
+Windows or Linux 
 
-```
+```bash
 pip install -r requirements.txt
 py add_user.py -n name password
 py app.py
 ```
 The first run will generate .config.env and signing keys;
 be sure to specify PROTECT_PATH and review other parameters within .config.env.
+
+## You can use Docker
+```bash
+docker build -t auth:latest .
+docker run -d -p 8000:8000 --name auth auth
+```
+Create users
+```bash
+docker exec -it auth bash
+python add_user.py -n name password
+exit
+``` 
 
 ---
 If you find this project useful, please give it a star! ⭐
