@@ -1,8 +1,14 @@
+![Stars](https://img.shields.io/github/stars/mikhailtte/nginx-auth-request-jwt?style=social&color=blue)
+![alt text](https://img.shields.io/github/forks/mikhailtte/nginx-auth-request-jwt)
+![alt text](https://img.shields.io/github/license/mikhailtte/nginx-auth-request-jwt)
+[![Language](https://img.shields.io/badge/Language-Python%203.13-blue)](https://www.python.org/)
+
 # Nginx Authentication via auth_request
 
-**Returns HTTP code 200 (OK) or 401 (Unauthorized) depending on the authentication result.**
+### **Returns OK 200 or 401 Unauthorized depending on the authentication result.**
 
-This is an authentication interface for nginx using the `auth_request` directive. It uses bcrypt for password hashing and RSA-2048 for token signing. This interface can be used to protect a specific path, such as `/some`.
+This is an authentication interface, great to use with nginx `auth_request` directive or anything else to protect a specific path, such as `'/'` or `/some`.
+
 
 ## How it works
 
@@ -29,9 +35,16 @@ This is an authentication interface for nginx using the `auth_request` directive
 
 Requirements: Python 3.13, nginx + SSL
 
-1. ```pip install -r requirements.txt```
-2. First run will generate `.config.env` and signing keys
-```py app.py```
-3. Specify `PROTECT_PATH` and review other parameters in `.config.env`
-4. ```py app.py```
-5. Configure nginx (or another) authentication to use this application.
+
+```
+pip install -r requirements.txt
+py add_user.py yourname yourpass
+py app.py
+```
+The first run will generate .config.env and signing keys;
+be sure to specify PROTECT_PATH and review other parameters within .config.env.
+
+---
+If you find this project useful, please give it a star! ⭐
+
+Join the [Discussion](https://github.com/mikhailtte/nginx-auth-request-jwt/discussions)!
