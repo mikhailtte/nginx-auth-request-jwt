@@ -108,6 +108,7 @@ class Config():
             'ALGORITHM=\'RS256\'\n '
             'PORT = 8000\n '
             'HOST = \'0.0.0.0\'\n '
+            'PROTECT_PATH=\'protected_path\''
         )
         with open(config_path, 'w', encoding='utf-8') as file:
             file.write(config)
