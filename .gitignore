@@ -165,3 +165,7 @@ cython_debug/
 pqicb.db
 .ini
 .pem
+pytest.ini
+test_mail.py
+jwt-public.pem
+jwt-private.pem
