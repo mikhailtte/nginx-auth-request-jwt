@@ -90,11 +90,10 @@ class Config():
         if not os.path.exists(config_path):
             try:
                 Config.create_config_file(config_path)
-                Config.notice_window(
-                    f'Something is wrong! Check the configuration file! ({config_path})'
-                )
+            except IOError as e:
+                print(f"Error writing to file: {e}")
             except Exception as e:
-                print(f"Ошибка при создании конфигурации: {e}")
+                print(f"Error creating configuration file: {e}")
     
     @staticmethod
     def create_config_file(config_path):
@@ -107,27 +106,11 @@ class Config():
             'SECURE=True\n '
             '# Encryption algorithm\n '
             'ALGORITHM=\'RS256\'\n '
-            'PORT = 8001\n '
+            'PORT = 8000\n '
             'HOST = \'0.0.0.0\'\n '
         )
-
-        try:
-            with open(config_path, 'w', encoding='utf-8') as file:
-                file.write(config)
-        except IOError as e:
-            print(f"Error writing to file: {e}")
-        except Exception as e:
-            print(f"Error creating configuration: {e}")
-
-    @staticmethod
-    def notice_window(message, title="Authentication Service: nginx-auth-request-jwt"):
-        import wx
-        app = wx.App()
-        dlg = wx.MessageDialog(None, message, title, wx.OK | wx.ICON_INFORMATION)
-        dlg.ShowModal()
-        dlg.Destroy()
-        app.MainLoop()
-        exit()
+        with open(config_path, 'w', encoding='utf-8') as file:
+            file.write(config)
 
 class SettingsModel(BaseSettings):
         TOKEN_EXPIRATION_SECS: int = 3600
