@@ -27,7 +27,7 @@ class User(Base):
 class Database:
 
     # engine = create_engine("sqlite://", echo=True)
-    DATABASE = 'pqicb.db'
+    DATABASE = 'base.db'
     config_path = '.config.env'
 
     def __init__(self, database_uri, Base: DeclarativeBase):

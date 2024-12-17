@@ -31,7 +31,7 @@ def del_user(db_path, username):
 
 if __name__ == '__main__':
 
-    db_path = 'pqicb.db'
+    db_path = 'base.db'
     flag = sys.argv[1]
     if flag == '-n':
         username = sys.argv[2]
