@@ -169,3 +169,4 @@ pytest.ini
 test_mail.py
 jwt-public.pem
 jwt-private.pem
+.config.env
