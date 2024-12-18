@@ -1,61 +1,88 @@
-
-import os
-import sqlite3
 from contextlib import contextmanager
-import bcrypt
-from flask import Flask
+import os
+from bcrypt import checkpw
+from sqlalchemy import MetaData, String, select
+from sqlalchemy.orm import (
+    DeclarativeBase, sessionmaker, Mapped, mapped_column
+)
+from sqlalchemy import create_engine
+from sqlalchemy.exc import SQLAlchemyError
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import BaseModel, field_validator
 
 config_path = '.config.env'
 
-class Db:
-    DATABASE = 'pqicb.db'
+class Base(DeclarativeBase):
+    pass
 
-    def __init__(self):
-        self._conn = None
+class User(Base):
+    __tablename__ = "users"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    username: Mapped[str] = mapped_column(String(30), unique=True)
+    password: Mapped[str]
+
+    def __repr__(self) -> str:
+        return f"User(id={self.id!r}, name={self.username!r}, hash={self.password!r})"
+
+class Database:
+
+    # engine = create_engine("sqlite://", echo=True)
+    DATABASE = 'base.db'
+    config_path = '.config.env'
+
+    def __init__(self, database_uri, Base: DeclarativeBase):
+        self.DATABASE_URI = database_uri
+        self.engine = create_engine(self.DATABASE_URI)
+        self.session_factory = sessionmaker(bind=self.engine)
+        self.Base = Base
+        self.Base.metadata.create_all(self.engine)
 
     @contextmanager
-    def get_connection(self):
-        if not self._conn:
-            self._conn = sqlite3.connect(self.DATABASE)
+    def get_session(self):
+        session = self.session_factory()
         try:
-            yield self._conn
+            yield session
+        except SQLAlchemyError as e:
+            session.rollback()
+            raise SQLAlchemyError(e)
         finally:
-            if self._conn:
-                self._conn.commit()
-                self._conn.close()
-                self._conn = None
+            session.close()
+    
+    def add_user(self, username: str, password: str) -> bool:
+        with self.get_session() as session:
+            new_user = User()
+            new_user.username = username
+            new_user.password = password
+            try:
+                session.add(new_user)
+                session.commit()
+                return True
+            except SQLAlchemyError as _:
+                session.rollback()
+                return False
 
-    def init_db(self, app: Flask):
-        with self.get_connection() as conn:
-            with app.open_resource('schema.sql', mode='r') as f:
-                conn.cursor().executescript(f.read())
+    def get_user(self, name: str) -> User:
+        with self.get_session() as session:
+            stmt = select(User).where(User.username == name)
+            user = session.execute(stmt).scalar_one()
+            return user
 
-    def query_db(self, query, args=()): # <======================================
-        with self.get_connection() as conn:
-            cur = conn.cursor()
-            cur.execute(query, args)
-            rv = cur.fetchall()
-            return rv
-
-    def add_user(self, username, password): # <======================================
-        with self.get_connection() as conn:
-            query = "INSERT INTO users (username, password) VALUES (?, ?)"
-            conn.execute(query, (username, password))
-        return True
-
-    def check_credentials(self, username: str, password: str): # <======================================
+    def check_credentials(self, username: str, password: str):
         try:
-            user = self.query_db('SELECT * FROM users WHERE username=?', (username,))
-            if user:
-                hashed_password = user[0][2]
-                return bcrypt.checkpw(password.encode('utf-8'), hashed_password)
+            user = self.get_user(username)
+            if not user:
+                return False
+            elif user:
+                return checkpw(password.encode('utf-8'), user.password)
+        except Exception:
             return False
-        except Exception as e:
-            print(f"Ошибка при проверке учетных данных: {e}")
-            return False
-
+    
+    def clean_db(self):
+        metadata = MetaData()
+        metadata.reflect(bind=self.engine)
+        for table in reversed(metadata.sorted_tables):
+            with self.get_session() as session:
+                session.execute(table.delete())
 
 class Config():
     @staticmethod
@@ -63,44 +90,28 @@ class Config():
         if not os.path.exists(config_path):
             try:
                 Config.create_config_file(config_path)
-                Config.notice_window(
-                    f'Something is wrong! Check the configuration file! ({config_path})'
-                )
+            except IOError as e:
+                print(f"Error writing to file: {e}")
             except Exception as e:
-                print(f"Ошибка при создании конфигурации: {e}")
+                print(f"Error creating configuration file: {e}")
     
     @staticmethod
     def create_config_file(config_path):
         config = (
-            '# Время действия основного токена\n'
-            'TOKEN_EXPIRATION_SECS = 3600\n'
-            '# Время действия токена обновления\n'
-            'REFRESH_TOKEN_EXP = 259200\n'
-            '# Только HTTPS\n'
-            'SECURE=True\n'
-            '# Алгоритм шифрования\n'
-            'ALGORITHM=\'RS256\'\n'
-            'PORT = 8001\n'
-            'HOST = \'0.0.0.0\'\n'
+            '# Token expiration date\n '
+            'TOKEN_EXPIRATION_SECS = 3600\n '
+            '# Refresh token expiration time\n '
+            'REFRESH_TOKEN_EXP = 259200\n '
+            '# HTTPS Only\n '
+            'SECURE=True\n '
+            '# Encryption algorithm\n '
+            'ALGORITHM=\'RS256\'\n '
+            'PORT = 8000\n '
+            'HOST = \'0.0.0.0\'\n '
+            'PROTECT_PATH=\'protected_path\''
         )
-
-        try:
-            with open(config_path, 'w', encoding='utf-8') as file:
-                file.write(config)
-        except IOError as e:
-            print(f"Ошибка записи в файл: {e}")
-        except Exception as e:
-            print(f"Ошибка при создании конфигурации: {e}")
-
-    @staticmethod
-    def notice_window(message, title="Authentication Service"):
-        import wx
-        app = wx.App()
-        dlg = wx.MessageDialog(None, message, title, wx.OK | wx.ICON_INFORMATION)
-        dlg.ShowModal()
-        dlg.Destroy()
-        app.MainLoop()
-        exit()
+        with open(config_path, 'w', encoding='utf-8') as file:
+            file.write(config)
 
 class SettingsModel(BaseSettings):
         TOKEN_EXPIRATION_SECS: int = 3600
@@ -131,10 +142,21 @@ class CredentialsModel(BaseModel):
             raise ValueError('Invalid Form')
         return v
 
-Config.init_config(config_path)
-db = Db()
 try:
+    Config.init_config(config_path)
     settings = SettingsModel()
 except Exception as e:
-    print(f'Ошибка при чтении конфигурации: {e}')
+    print(f'Error reading configuration: {e}')
     exit()
+
+try:
+    base = Base()
+    db = Database(
+        f'sqlite:///{Database.DATABASE}',
+        Base=base
+    )
+except Exception as e:
+    print(f'Database connection error: {e}')
+    exit()
+
+

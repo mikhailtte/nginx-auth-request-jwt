@@ -6,13 +6,20 @@ from crypt import Crypt
 import logging
 
 app = Flask(__name__)
-db.init_db(app)
 _ = Crypt.get_public_key()
 logging.basicConfig(
     filename='auth.log', level=logging.INFO, 
     format='%(asctime)s - %(levelname)s - %(message)s'
 )
-protected_path = f'/{s.PROTECT_PATH}/ru_RU/'
+protected_path = f'/{s.PROTECT_PATH}'
+
+@app.errorhandler(Exception)
+def internal_server_error(error):
+    return render_template(
+        'error.html',
+        error_code=error.code,
+        message=error.name
+    )
 
 @app.route('/validation', methods=['GET'])
 def validate_token():
