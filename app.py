@@ -13,6 +13,14 @@ logging.basicConfig(
 )
 protected_path = f'/{s.PROTECT_PATH}'
 
+@app.errorhandler(Exception)
+def internal_server_error(error):
+    return render_template(
+        'error.html',
+        error_code=error.code,
+        message=error.name
+    )
+
 @app.route('/validation', methods=['GET'])
 def validate_token():
     _401 = make_response(redirect('/authpage')), 401
