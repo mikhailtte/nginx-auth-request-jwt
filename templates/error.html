@@ -3,7 +3,8 @@
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Not Found</title>
+    <link type="image/png" sizes="32x32" rel="icon" href="lock-32.png">
+    <title>Error</title>
     <style>
       body {
         margin: 0;
@@ -52,9 +53,9 @@
   </head>
   <body>
     <div class="container">
-      <h1>404</h1>
-      <p>Страница не найдена</p>
-      <a href="/" class="button">Вернутся</a>
+      <h1>{{ error_code }}</h1>
+      <p>{{ message }}</p>
+      <a href="/" class="button">Go back</a>
       <div class="loader"></div>
     </div>
   </body>
